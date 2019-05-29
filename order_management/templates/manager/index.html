@@ -1,0 +1,92 @@
+{% extends 'baseHeader.html' %}
+{% block main %}
+    {% if superManager == 0 %}
+
+        <table>
+            <tr>
+                <td>序号</td>
+                <td>id</td>
+                <td>姓名</td>
+                <td>密码</td>
+                <td>创建时间</td>
+                <td>用户级别</td>
+                <td>操作</td>
+            </tr>
+            {% for manager in managers %}
+                <tr id="manager{{ manager.id }}">
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ manager.id }}</td>
+                    <td>{{ manager.name }}</td>
+                    <td>
+                        {% ifnotequal manager.password '88888888'%}
+                            已加密
+                        {% else %}
+                            已重置为88888888
+                        {% endifnotequal %}
+
+                    </td>
+                    <td>{{ manager.createTime }}</td>
+                    <td>{{ manager.superManager }}</td>
+                    <td>
+                        <button>重置密码</button>
+                        <button>删除用户</button>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+    <script>
+        $(function () {
+            {% for manager in managers %}
+                $('#manager'+'{{ manager.id }}'+'>td:last-child>button:first-child').click(function(){
+                    var confirm = window.confirm('确认重置密码？');
+                    if (confirm){
+                        $.ajax({
+                            type: "POST",
+                            url: "/manage/resetManagerPassword/",
+                            dataType: 'json',
+                            data: {
+                                'id': '{{manager.id}}',
+                                'csrfmiddlewaretoken': '{{ csrf_token }}'
+                            },
+                            success: function (msg) {
+                                var result = msg['result'];
+                                if(result){
+                                    alert('重置成功')
+                                    $('#manager'+'{{ manager.id }}'+'>td:nth-child(4)').text('已重置')
+
+                                }else {
+                                    alert('重置失败')
+                                }
+                            }
+                        })
+                    }
+                })
+                $('#manager'+'{{ manager.id }}'+'>td:last-child>button:last-child').click(function(){
+                    var confirm = window.confirm('确认删除用户？');
+                    if (confirm){
+                        $.ajax({
+                            type: "POST",
+                            url: "/manage/deleteManager/",
+                            dataType: 'json',
+                            data: {
+                                'id': '{{manager.id}}',
+                                'csrfmiddlewaretoken': '{{ csrf_token }}'
+                            },
+                            success: function (msg) {
+                                var result = msg['result'];
+                                if(result){
+                                    alert('删除成功')
+                                    $('#manager'+'{{ manager.id }}').remove()
+                                }else {
+                                    alert('删除失败')
+                                }
+                            }
+                        })
+                    }
+
+                })
+            {% endfor %}
+        })
+    </script>
+{% endblock %}

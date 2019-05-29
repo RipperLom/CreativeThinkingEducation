@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <style>
+        *{ margin:0px auto;
+            padding: 0;
+            font-size:12px; text-align: justify; vertical-align: middle;}
+        a{color:black;}
+        a:link{ text-decoration:none; }
+        a:hover{ text-decoration:underline; }
+        ol,ul,dl{list-style: none;}
+
+        #main{
+            margin-top: 30px;
+            height: 500px;
+            width: 500px;
+            border-top: 1px solid #ccc;
+            border-left: 1px solid #ccc;
+        }
+        #main div{
+            float: left;
+            border-bottom: 1px solid #ccc;
+            border-right: 1px solid #ccc;
+            text-align: center;
+            transition: all 1s;
+        }
+        .n2{
+            background: #eee;
+        }
+        .n4{
+            background: #ddd;
+        }
+        .n8{
+            background: #ccc;
+        }
+        .n16{
+            background: #bbb;
+        }
+        .n32{
+            background: #aaa;
+        }
+        .n64{
+            background: #999;
+        }
+        .n128{
+            background: #888;
+        }
+        .n256{
+            background: #777;
+        }
+        .n512{
+            background: #666;
+        }
+        .n1024{
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <div id="main"></div>
+    <script>
+        var height = 500;
+        var width = 500;
+        var numOfRow = 4;
+        var numOfColumn = 4;
+        var numInSum = numOfRow * numOfColumn - 1;
+//------initialization of DOM------------------------------------------
+        var main = document.getElementById("main");
+        var mainDivs = main.getElementsByTagName("div");
+//---------------------------------------------------------------------
+        var heightOfDiv = height / numOfRow - 1;
+        var widthOfDiv = width / numOfColumn - 1;
+        for(var i = 0; i < numOfRow; i++){
+            for(var j = 0; j < numOfColumn; j++){
+                var newDiv = document.createElement("div");
+                newDiv.style.height = heightOfDiv + "px";
+                newDiv.style.lineHeight = heightOfDiv + "px";
+                newDiv.style.width = widthOfDiv + "px";
+                newDiv.style.fontSize = 0.2 * Math.pow(heightOfDiv * heightOfDiv + widthOfDiv * widthOfDiv, 0.5) + "px";
+                main.appendChild(newDiv);
+            }
+        }
+        var arrAll = [];
+        var previousArrAll = [];
+        for(var i = 0; i < numOfRow; i++){
+            arrAll.push(new Array(numOfColumn));
+            previousArrAll.push(new Array(numOfColumn));
+        }
+        for(var i = 0; i < arrAll.length; i++){
+            for(var j = 0; j < arrAll[i].length; j++){
+                arrAll[i][j] = 0;
+            }
+        }
+        create2(arrAll);
+        renewScreen();
+//*************************test arr1 and arr2***********************************************
+        function testTwoArr(arr1, arr2){
+            for(var i = 0; i < arr1.length; i++){
+                for(var j = 0; j < arr1[i].length; j++){
+                    if(arr1[i][j] != arr2[i][j]){
+                        return false
+                    }
+                }
+            }
+            return true;
+        }
+//******************************************************************************************
+//**********************renew arrAll*********************************************************
+        function renewArrAll(arrAll, arr){
+            for(var i = 0; i < arr.length; i++){
+                for(var j = 0; j < arr[i].length; j++){
+                    arrAll[i][j] = arr[i][j];
+                }
+            }
+        }
+//******************************************************************************************
+//*****************renew from Array to screen**********************************************
+        function renewScreen(){
+            for(var i = 0; i < numOfRow; i++){
+                for(var j = 0; j < numOfColumn; j++){
+                    if(arrAll[i][j] != 0){
+                        mainDivs[i * numOfColumn + j].setAttribute("class", "n" + arrAll[i][j])
+                        mainDivs[i * numOfColumn + j].innerHTML = arrAll[i][j];
+                    }else{
+                        mainDivs[i * numOfColumn + j].removeAttribute("class");
+                        mainDivs[i * numOfColumn + j].innerHTML = "";
+                    }
+                }
+            }
+        }
+//******************************************************************************************
+//***********************one Arr Go Right or Left******************************************
+        function oneArrGoLeftOrRight(arr, str){
+            var newArr = [];
+            var newArrBlack = [];
+            for(var i = arr.length - 1; i >= 0; i--){
+                if(arr[i] != 0){
+                    newArr.unshift(arr[i]);
+                }else{
+                    newArrBlack.push(0);
+                }
+            }
+            if(str == "left"){
+                return newArr.concat(newArrBlack);
+            }else{
+                return newArrBlack.concat(newArr);
+            }
+        }
+//******************************************************************************************
+//***********************all Arr Go Right or Left*******************************************
+        function allArrGoLeftOrRight(arrAll, str){
+            var newArrAll = [];
+            for(var i = 0; i < arrAll.length; i++){
+                newArrAll.push(oneArrGoLeftOrRight(arrAll[i], str));
+            }
+            return newArrAll;
+        }
+//******************************************************************************************
+//***********************fix arrAll******************************************
+        function fixArrAll(arrAll){
+            for(var i = 0; i < arrAll.length; i++){
+                for(var j = 1; j < arrAll[i].length; j++){
+                    if(arrAll[i][j - 1] == arrAll[i][j]){
+                        arrAll[i][j] = 2 * arrAll[i][j];
+                        arrAll[i][j - 1] = 0;
+                    }
+                }
+            }
+            return arrAll;
+        }
+//******************************************************************************************
+//***********************fixed ArrAll On Left or Right***************************************
+        function fixedArrGoLeftOrRight(arrAll, str){
+            var previousArrAll = arrAll;
+            var temArrAll = arrAll;
+//            var num = 0;
+            do{
+//                num++;
+                previousArrAll = [].concat(temArrAll);
+//                console.log(num, previousArrAll);
+                temArrAll = allArrGoLeftOrRight(temArrAll, str);
+                temArrAll = fixArrAll(temArrAll);
+                remove2048(temArrAll);
+//                console.log(num, temArrAll);
+            }while(!testTwoArr(temArrAll, previousArrAll));
+            return temArrAll;
+        }
+//******************************************************************************************
+//***********************all Arr transposition*******************************************
+        function allArrTransposition(arrAll){
+            var numOfRow = arrAll[0].length;
+            var nomOfColum = arrAll.length;
+            var newArrAll = [];
+            for(var i = 0; i < numOfRow; i++){
+                newArrAll.push(new Array(nomOfColum));
+            }
+            for(var i = 0; i < arrAll.length; i++){
+                for(var j = 0; j < arrAll[i].length; j++){
+                    newArrAll[j][i] = arrAll[i][j];
+                }
+            }
+            return newArrAll;
+        }
+//******************************************************************************************
+//***********************all Arr Go Top or Bottom*******************************************
+        function fixedArrGoTopOrBottom(arrAll, str){
+            var direction = "";
+            if(str == "bottom"){
+                direction = "right";
+            }else{
+                direction = "left";
+            }
+            var temArrAll = allArrTransposition(arrAll);
+            var temArrAll = fixedArrGoLeftOrRight(temArrAll, direction);
+            return allArrTransposition(temArrAll);
+        }
+//******************************************************************************************
+//        console.log(fixedArrGoLeftOrRight(arrAll, "left"));
+//        console.log(fixedArrGoLeftOrRight(arrAll, "right"));
+//        console.log(fixedArrGoTopOrBottom(arrAll, "bottom"));
+//        console.log(fixedArrGoTopOrBottom(arrAll, "top"));
+//***********************Create2andremove2048*******************************************
+        function create2(arrAll){
+            var bool = true;
+            var num = 0;
+            do{
+                var rdm = Math.floor(Math.random() * (numInSum + 1));
+                var row = Math.floor(rdm / numOfColumn);
+                var column = rdm % numOfColumn;
+                if(arrAll[row][column] == 0){
+                    arrAll[row][column] = 2;
+                    bool = false;
+                }
+                num++;
+            }while(bool && num < 10);
+            return arrAll;
+
+        }
+//******************************************************************************************
+//***********************Create2*******************************************
+        function remove2048(arrAll){
+
+            for(var i = 0; i < arrAll.length; i++){
+                for(var j = 1; j < arrAll[i].length; j++){
+                    if(arrAll[i][j] == 2048){
+                        arrAll[i][j] = 0;
+                        alert("Well done!")
+                    }
+                }
+            }
+            return arrAll;
+        }
+//******************************************************************************************
+        function testFull(arr1){
+            for(var i = 0; i < arr1.length; i++){
+                for(var j = 0; j < arr1[i].length; j++){
+                    if(arr1[i][j] == 0){
+                        return false
+                    }
+                }
+            }
+            return true;
+        }
+//&&&&&&&&&&&&&&&&&&&&&&event press key left &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+        document.onkeydown = function(e){
+            var e = e || window.event;
+            renewArrAll(previousArrAll, arrAll);
+            if(e.keyCode == 37){
+                renewArrAll(arrAll, fixedArrGoLeftOrRight(arrAll, "left"));
+                renewArrAll(arrAll, create2(arrAll));
+                renewScreen();
+            }else if(e.keyCode == 38){
+                renewArrAll(arrAll, fixedArrGoTopOrBottom(arrAll, "top"));
+                renewArrAll(arrAll, create2(arrAll));
+                renewScreen();
+            }else if(e.keyCode == 39){
+                renewArrAll(arrAll, fixedArrGoLeftOrRight(arrAll, "right"));
+                renewArrAll(arrAll, create2(arrAll));
+                renewScreen();
+            }else if(e.keyCode == 40){
+                renewArrAll(arrAll, fixedArrGoTopOrBottom(arrAll, "bottom"));
+                renewArrAll(arrAll, create2(arrAll));
+                renewScreen();
+            }
+            if(testTwoArr(previousArrAll, arrAll) && testFull(arrAll)){
+                alert("Damn it! Maybe you are really died.")
+            }
+        }
+//&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+
+    </script>
+</body>
+</html>

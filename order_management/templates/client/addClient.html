@@ -1,0 +1,156 @@
+{% extends 'baseHeader.html' %}
+
+{% block title %}
+    添加客户
+{% endblock %}
+
+{% block main %}
+    <center>
+        <form id="form1" action="" method="post">
+            {% csrf_token %}
+            <font id='error' color="red">{{ error|safe }}</font><br>
+            {% if multiClients|length != 0 %}
+                <table>
+                    <tr>
+                        <td>id</td>
+                        <td>姓名</td>
+                        <td>性别</td>
+                        <td>年龄</td>
+                        <td>幼儿</td>
+                        <td>小学</td>
+                        <td>初中</td>
+                        <td>高中</td>
+                        <td>电话</td>
+                    </tr>
+                    {% for multiClient in multiClients %}
+                        <tr>
+                            <td>{{ multiClient.id }}</td>
+                            <td>{{ multiClient.realName }}</td>
+                            <td>{% if multiClient.sex == 1 %}男{% elif multiClient.sex == 0 %}女{% endif %}</td>
+                            <td>{% widthratio multiClient.createTime.year -1 1 as createYear %}
+                                {% with multiClient.age|add:createYear as middle %}
+                                    {{ middle|add:multiClient.createTime.today.year }}
+                                {% endwith %}
+                            </td>
+                            <td>{{ multiClient.kindergarten }}</td>
+                            <td>{{ multiClient.primarySchool }}</td>
+                            <td>{{ multiClient.junior }}</td>
+                            <td>{{ multiClient.senior }}</td>
+                            <td>{{ multiClient.tel }}</td>
+
+                        </tr>
+                        <tr>
+                            <td colspan="3">住址：{{ multiClient.address }}</td>
+                            <td colspan="2">备注：{{ multiClient.others }}</td>
+                            <td colspan="2">负责人：{{ multiClient.manager.name }}</td>
+                            <td colspan="2">修改：{{ multiClient.modifyTime.date }}</td>
+
+                        </tr>
+                    {% endfor %}
+
+                </table>
+                <br>
+            {% endif %}
+            <table id="inputs1">
+                <tr>
+                    <td>姓名</td>
+                    <td><input type="text" name="realName" value="{{ client.realName }}"></td>
+                    <td>性别</td>
+                    <td><input type="radio" name="sex" {% if client.sex == None or client.sex == '1' or client.sex == 1 %}
+                        checked
+                    {% endif %} value="1">男 &nbsp;&nbsp;
+                        <input type="radio" name="sex" {% if client.sex == '0' or client.sex == 0 %}
+                        checked
+                    {% endif %}value="0">女</td>
+                    <td>年龄</td>
+                    <td>
+                        {% if client.createTime == None %}
+                            <input type="text" name="age" value="">
+                        {% else %}
+                            {% widthratio client.createTime.year -1 1 as createYear %}{% with client.age|add:createYear as middle %}
+                                {% with middle|add:client.createTime.today.year as final %}
+                                    <input type="text" name="age" value="{{ final }}">
+                                {% endwith %}
+                            {% endwith %}
+                        {% endif %}
+
+                    </td>
+                </tr>
+                <tr>
+                    <td>电话</td>
+                    <td><input type="text" name="tel" value="{{ client.tel }}"></td>
+                    <td>住址</td>
+                    <td><input type="text" name="address" value="{{ client.address }}"></td>
+                    <td>别名</td>
+                    <td><input type="text" name="name" value="{{ client.name }}"></td>
+                </tr>
+                <tr>
+                    <td>幼儿园</td>
+                    <td><input type="text" name="kindergarten" value="{{ client.kindergarten }}"></td>
+                    <td>小学</td>
+                    <td><input type="text" name="primarySchool" value="{{ client.primarySchool }}"></td>
+                    <td>初中</td>
+                    <td><input type="text" name="junior" value="{{ client.junior }}"></td>
+                </tr>
+                <tr>
+                    <td>高中</td>
+                    <td><input type="text" name="senior" value="{{ client.senior }}"></td>
+                    <td>备注</td>
+                    <td><input type="text" name="others" value="{{ client.others }}" placeholder="家长信息等"></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td colspan="6">
+                        {% block submit %}
+                            <input type="submit" value="提交">
+                        {% endblock %}
+                    </td>
+                </tr>
+            </table>
+
+        </form>
+    </center>
+
+    <script>
+        $(function () {
+            $('#inputs1 input[name="realName"]').change(function () {
+                var realName = $('#inputs1 input[name="realName"]').val().trim();
+                $('#inputs1 input[name="name"]').val(realName);
+            })
+            $('#form1').submit(function () {
+                var confirm = window.confirm("确认提交？");
+                if (!confirm){
+                    return false
+                }
+                var realName = $('#inputs1 input[name="realName"]').val().trim();
+                var name = $('#inputs1 input[name="name"]').val().trim();
+                var age = parseInt($('#inputs1 input[name="age"]').val().trim());
+                var tel = parseInt($('#inputs1 input[name="tel"]').val().trim());
+                var kindergarten = $('#inputs1 input[name="kindergarten"]').val().trim();
+                var primarySchool = $('#inputs1 input[name="primarySchool"]').val().trim();
+                var junior = $('#inputs1 input[name="junior"]').val().trim();
+                var senior = $('#inputs1 input[name="senior"]').val().trim();
+                {#验证名字#}
+                if(realName.length == 0 | name.length == 0){
+                    $('#error').text("姓名和别名不能为空")
+                    return false
+                }else if(isNaN(age)){
+                    $('#error').text("请输入正确年龄格式")
+                    return false
+                }else if (age < 1 || age > 100){
+                    $('#error').text("请输入正确年龄范围")
+                    return false
+                }else if (isNaN(tel)){
+                    $('#error').text("请输入正确电话格式。多个电话号码，请写备注。")
+                    return false
+                }else if (kindergarten.length > 4 || primarySchool.length > 4 || junior.length > 4 || senior.length > 4){
+                    $('#error').text("请简化学校名称到4字及以内")
+                    return false
+                }else {
+                    return true
+                }
+            })
+        })
+    </script>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends 'baseNotice.html' %}
+{% block header %}
+    <a href=""><font color="red">欢迎管理员：</font></a>
+    <a href=""><font>{{ name }}</font></a>&nbsp;&nbsp;
+
+    <a href="/manage/changePassword/"><font color="red">修改密码</font></a>&nbsp;
+    <a href="/manage/vanish/"><font color="red">注销登录</font></a>&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;
+    {% if superManager == 0 %}
+        <a href="/manage/modifyNotice/"><font>管理公告</font></a>&nbsp;&nbsp;
+        <a href="/manage/"><font>管理管理员</font></a>
+    {% endif %}
+{% endblock %}

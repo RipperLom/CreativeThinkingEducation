@@ -1,0 +1,64 @@
+{% extends 'client/showClients.html' %}
+
+{% block addedPart %}
+    <form action="" method="post">
+        {% csrf_token %}
+        <table id="inputs1">
+            <tr>
+                <td>姓名</td>
+                <td><input type="text" name="realName" value="{{ client.realName }}"></td>
+                <td>性别</td>
+                <td><input type="radio" name="sex" {% if client.sex == None or client.sex == '1' or client.sex == 1 %}
+                    checked
+                {% endif %} value="1">男 &nbsp;&nbsp;
+                    <input type="radio" name="sex" {% if client.sex == '0' or client.sex == 0 %}
+                    checked
+                {% endif %}value="0">女</td>
+                <td>年龄</td>
+                <td>
+                    {% if client.createTime == None %}
+                        <input type="text" name="age" value="">
+                    {% else %}
+                        {% widthratio client.createTime.year -1 1 as createYear %}{% with client.age|add:createYear as middle %}
+                            {% with middle|add:client.createTime.today.year as final %}
+                                <input type="text" name="age" value="{{ final }}">
+                            {% endwith %}
+                        {% endwith %}
+                    {% endif %}
+
+                </td>
+            </tr>
+            <tr>
+                <td>电话</td>
+                <td><input type="text" name="tel" value="{{ client.tel }}"></td>
+                <td>住址</td>
+                <td><input type="text" name="address" value="{{ client.address }}"></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>幼儿园</td>
+                <td><input type="text" name="kindergarten" value="{{ client.kindergarten }}"></td>
+                <td>小学</td>
+                <td><input type="text" name="primarySchool" value="{{ client.primarySchool }}"></td>
+                <td>初中</td>
+                <td><input type="text" name="junior" value="{{ client.junior }}"></td>
+            </tr>
+            <tr>
+                <td>高中</td>
+                <td><input type="text" name="senior" value="{{ client.senior }}"></td>
+                <td>备注</td>
+                <td><input type="text" name="others" value="{{ client.others }}" placeholder="家长信息等"></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td colspan="6">
+
+                    <input type="submit" value="查询">
+
+                </td>
+            </tr>
+        </table>
+    </form>
+{% endblock %}

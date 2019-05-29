@@ -1,0 +1,18 @@
+{% extends 'baseNav.html' %}
+{% block style %}
+    p{
+        text-indent:10px;
+        width: 100%;
+        height: auto;
+        word-wrap:break-word;
+        word-break:break-all;
+        overflow: hidden;
+    }
+
+{% endblock %}
+{% block notice %}
+    <p>公告：<br><br></p>
+
+    {% for notice in notices %}<p>{{ forloop.counter }}、{{ notice }}<br><br></p>{% endfor %}
+
+{% endblock %}

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}这里写对应标题{% endblock %}</title>
+    <script src="/static/js/jquary.js"></script>
+    <link rel="stylesheet" href="/static/css/base.css">
+    <style>
+        {% block style %}
+        {% endblock %}
+    </style>
+</head>
+<body>
+    <div id="picShow"><img id="picShowImage" src="" alt=""></div>
+    <header>
+        <p>
+            {% block header %}这里写对应头----欢迎{% endblock %}
+        </p>
+    </header>
+    <nav>{% block nav %}这里写对应导航{% endblock %}</nav>
+    <div id="main1">
+        {% block main %}
+        {% endblock %}
+    </div>
+    <div id="notice">{% block notice %}这里写对应公告{% endblock %}</div>
+
+    <script>
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,335 @@
+{% extends 'baseHeader.html' %}
+
+{% block title %}
+    展示支出
+{% endblock %}
+
+{% block main %}
+    <center>
+        <font id='error' color="red">{{ error|safe|default:"谨慎提交，提交后不可删除" }}</font><br>
+        {% block addedPart %}{% endblock %}
+        {% if multiExpenses|length != 0 %}
+            <table id="table1">
+                <tr>
+                    <td>id</td>
+                    <td>编号/<br>简介</td>
+                    <td>时间/<br>金额</td>
+                    <td>负责人/<br>收款人</td>
+                    <td>凭证</td>
+                    <td>备注/<br>状态</td>
+                    <td>操作</td>
+                </tr>
+                {% for multiExpense in multiExpenses %}
+                    <tr class="expense{{ multiExpense.id }}">
+                        <td rowspan="2">{{ forloop.counter }}</td>
+                        <td>{{ multiExpense.uuidName|cut:'-'|slice:"20" }}</td>
+                        <td>{{ multiExpense.date|date:"Y-m-d" }}</td>
+                        <td>{{ multiExpense.manager.name }}</td>
+                        <td rowspan="2"><img class="voucherPic" src="{{ multiExpense.voucher }}" alt="未提交" height="70" width="70"></td>
+                        <td>{{ multiExpense.others }}</td>
+                        <td rowspan="2">
+                            {% if multiExpense.status == 1 %}
+{#                                    未通过#}
+                                <button name="modify">&nbsp;修改&nbsp;</button><br>
+                                <button name="delete">&nbsp;删除&nbsp;</button><br>
+                                <button name="submit">&nbsp;提交&nbsp;</button>
+                            {% elif multiExpense.status == 2 %}
+{#                                    修改中#}
+                                <button name="modify">&nbsp;修改&nbsp;</button><br>
+                                <button name="submit">&nbsp;提交&nbsp;</button>
+                            {% elif multiExpense.status == 3 %}
+{#                                    提交未审核#}
+                                {% if superManager < 1 %}
+                                    <button name="pass">&nbsp;通过&nbsp;</button><br>
+                                    <button name="unPass">&nbsp;未过&nbsp;</button>
+                                {% endif %}
+                            {% elif multiExpense.status == 4 %}
+{#                                    申请修改中#}
+                                {% if superManager < 1 %}
+                                    <button name="pass">&nbsp;通过&nbsp;</button><br>
+                                    <button name="unPass">&nbsp;未过&nbsp;</button>
+                                {% endif %}
+
+                            {% elif multiExpense.status == 5 %}
+{#                                    审核通过#}
+                                <button name="apply">&nbsp;申改&nbsp;</button>
+                            {% endif %}
+                        </td>
+
+                    </tr>
+                    <tr class="expense{{ multiExpense.id }}">
+                        <td>{{ multiExpense.name }}</td>
+                        <td>{{ multiExpense.money|floatformat:"2" }}</td>
+                        <td>{{ multiExpense.worker.realName }}</td>
+                        <td><font color="red">
+                            {% if multiExpense.status == 1 %}
+                                未提交
+                            {% elif multiExpense.status == 2 %}
+                                修改中
+                            {% elif multiExpense.status == 3 %}
+                                提交未审核
+                            {% elif multiExpense.status == 4 %}
+                                申请修改中
+                            {% elif multiExpense.status == 5 %}
+                                <font color="black">审核通过</font>
+                            {% endif %}
+                        </font></td>
+
+                    </tr>
+                {% endfor %}
+
+            </table>
+            <br>
+
+        {% endif %}
+    </center>
+
+    <script>
+        $(function () {
+            $('#picShow').click(function () {
+                $(this).hide()
+            })
+
+            $('.voucherPic').click(function () {
+                $('#picShow').show()
+                $('#picShowImage').attr('src',$(this).attr('src'))  //图片显示
+            })
+            {#遍历客户#}
+            {% for multiExpense in multiExpenses %}
+                {% if multiExpense.status == 1 %}
+{#                                    未通过#}
+{#                    <button name="modify">&nbsp;修改&nbsp;</button><br>#}
+                    $('#table1>tbody>tr.expense'+'{{ multiExpense.id }}'+'>td:last-child>button[name="modify"]').click(function () {
+                        var prompt = window.confirm("确认修改？");
+                        if(prompt){
+                            window.location.href = '/manage/modifyExpense/?id='+'{{ multiExpense.id }}'
+                        }
+                    })
+{#                    <button name="delete">&nbsp;删除&nbsp;</button><br>#}
+                    $('#table1>tbody>tr.expense'+'{{ multiExpense.id }}'+'>td:last-child>button[name="delete"]').click(function () {
+                        var prompt = window.confirm("确认删除？");
+                        if(prompt){
+                            $.ajax({
+                                type: "POST",
+                                url: '/manage/deleteExpense/',
+                                dataType: 'json',
+                                data: {
+                                    'id': '{{ multiExpense.id }}',
+                                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                                },
+                                success: function (msg) {
+                                    var result = msg['result'];
+                                    if(result){
+                                        alert('删除成功')
+                                        $('#table1>tbody>tr.expense'+'{{ multiExpense.id }}').remove()
+
+                                    }else {
+                                        alert('删除失败')
+                                    }
+                                }
+                            })
+                        }
+                    })
+{#                    <button name="submit">&nbsp;提交&nbsp;</button>#}
+                    $('#table1>tbody>tr.expense'+'{{ multiExpense.id }}'+'>td:last-child>button[name="submit"]').click(function () {
+                        var prompt = window.confirm("确认提交？");
+                        if(prompt){
+                            $.ajax({
+                                type: 'POST',
+                                url: '/manage/submitExpense/',
+                                dataType: 'json',
+                                data: {
+                                    'id': '{{ multiExpense.id }}',
+                                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                                },
+                                success: function (msg) {
+                                    var result = msg['result'];
+                                    if(result){
+                                        alert('提交成功')
+                                        window.location.reload()
+
+                                    }else {
+                                        alert('提交失败')
+                                    }
+                                    {#$('#table1>tbody>tr.expense'+'{{ multiExpense.id }}'+'>td:nth-child(4)>font').text('提交未审核')#}
+                                }
+                            })
+                        }
+                    })
+                {% elif multiExpense.status == 2 %}
+{#                                    修改中#}
+{#                    <button name="modify">&nbsp;修改&nbsp;</button><br>#}
+                    $('#table1>tbody>tr.expense'+'{{ multiExpense.id }}'+'>td:last-child>button[name="modify"]').click(function () {
+                        var prompt = window.confirm("确认修改？");
+                        if(prompt){
+                            window.location.href = '/manage/modifyExpense/?id='+'{{ multiExpense.id }}'
+                        }
+                    })
+{#                    <button name="submit">&nbsp;提交&nbsp;</button>#}
+                    $('#table1>tbody>tr.expense'+'{{ multiExpense.id }}'+'>td:last-child>button[name="submit"]').click(function () {
+                        var prompt = window.confirm("确认提交？");
+                        if(prompt){
+                            $.ajax({
+                                type: 'POST',
+                                url: '/manage/submitExpense/',
+                                dataType: 'json',
+                                data: {
+                                    'id': '{{ multiExpense.id }}',
+                                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                                },
+                                success: function (msg) {
+                                    var result = msg['result'];
+                                    if(result){
+                                        alert('提交成功')
+                                        window.location.reload()
+
+                                    }else {
+                                        alert('提交失败')
+                                    }
+                                    {#$('#table1>tbody>tr.expense'+'{{ multiExpense.id }}'+'>td:nth-child(4)>font').text('提交未审核')#}
+                                }
+                            })
+                        }
+                    })
+                {% elif multiExpense.status == 3 %}
+{#                                    提交未审核#}
+                    {% if superManager < 1 %}
+                        {#<button name="pass">&nbsp;通过&nbsp;</button><br>#}
+                        $('#table1>tbody>tr.expense'+'{{ multiExpense.id }}'+'>td:last-child>button[name="pass"]').click(function () {
+                            var prompt = window.confirm("确认审核通过？");
+                            if(prompt){
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '/manage/passExpense/',
+                                    dataType: 'json',
+                                    data: {
+                                        'id': '{{ multiExpense.id }}',
+                                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                                    },
+                                    success: function (msg) {
+                                        var result = msg['result'];
+                                        if(result){
+                                            alert('审批成功')
+                                            window.location.reload()
+                                        }else {
+                                            alert('审批失败')
+                                        }
+                                    }
+
+                                })
+                            }
+                        })
+                        {#<button name="unPass">&nbsp;未过&nbsp;</button>#}
+                        $('#table1>tbody>tr.expense'+'{{ multiExpense.id }}'+'>td:last-child>button[name="unPass"]').click(function () {
+                            var prompt = window.confirm("确认不通过，打回重做？");
+                            if(prompt){
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '/manage/unPassExpense/',
+                                    dataType: 'json',
+                                    data: {
+                                        'id': '{{ multiExpense.id }}',
+                                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                                    },
+                                    success: function (msg) {
+                                        var result = msg['result'];
+                                        if(result){
+                                            alert('审批成功')
+                                            window.location.reload()
+                                        }else {
+                                            alert('审批失败')
+                                        }
+                                    }
+
+                                })
+                            }
+                        })
+                    {% endif %}
+                {% elif multiExpense.status == 4 %}
+{#                                    申请修改中#}
+                    {% if superManager < 1 %}
+                        {#<button name="pass">&nbsp;通过&nbsp;</button><br>#}
+                        $('#table1>tbody>tr.expense'+'{{ multiExpense.id }}'+'>td:last-child>button[name="pass"]').click(function () {
+                            var prompt = window.confirm("确认审核通过？");
+                            if(prompt){
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '/manage/passExpense/',
+                                    dataType: 'json',
+                                    data: {
+                                        'id': '{{ multiExpense.id }}',
+                                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                                    },
+                                    success: function (msg) {
+                                        var result = msg['result'];
+                                        if(result){
+                                            alert('审批成功')
+                                            window.location.reload()
+                                        }else {
+                                            alert('审批失败')
+                                        }
+                                    }
+
+                                })
+                            }
+                        })
+                        {#<button name="unPass">&nbsp;未过&nbsp;</button>#}
+                        $('#table1>tbody>tr.expense'+'{{ multiExpense.id }}'+'>td:last-child>button[name="unPass"]').click(function () {
+                            var prompt = window.confirm("确认不通过，打回重做？");
+                            if(prompt){
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '/manage/unPassExpense/',
+                                    dataType: 'json',
+                                    data: {
+                                        'id': '{{ multiExpense.id }}',
+                                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                                    },
+                                    success: function (msg) {
+                                        var result = msg['result'];
+                                        if(result){
+                                            alert('审批成功')
+                                            window.location.reload()
+                                        }else {
+                                            alert('审批失败')
+                                        }
+                                    }
+
+                                })
+                            }
+                        })
+                    {% endif %}
+
+                {% elif multiExpense.status == 5 %}
+{#                                    审核通过#}
+{#                    <button name="apply">&nbsp;申改&nbsp;</button>#}
+                    $('#table1>tbody>tr.expense'+'{{ multiExpense.id }}'+'>td:last-child>button[name="apply"]').click(function () {
+                        var prompt = window.confirm("已审核通过，确认有信息要修改？");
+                        if(prompt){
+                            $.ajax({
+                                type: 'POST',
+                                url: '/manage/applyExpense/',
+                                dataType: 'json',
+                                data: {
+                                    'id': '{{ multiExpense.id }}',
+                                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                                },
+                                success: function (msg) {
+                                    var result = msg['result'];
+                                    if(result){
+                                        alert('申请修改成功')
+                                        window.location.reload()
+                                    }else {
+                                        alert('申请修改失败')
+                                    }
+                                }
+
+                            })
+                        }
+                    })
+                {% endif %}
+            {% endfor %}
+
+        })
+    </script>
+{% endblock %}

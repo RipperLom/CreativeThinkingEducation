@@ -1,0 +1,110 @@
+{% extends 'baseHeader.html' %}
+
+{% block title %}
+    添加客户
+{% endblock %}
+
+{% block main %}
+    <center>
+        <form id="form1" action="" method="post">
+            {% csrf_token %}
+            <font id='error' color="red">{{ error|safe }}</font><br>
+            {% if multiWorkers|length != 0 %}
+                <table>
+                    <tr>
+                        <td>id</td>
+                        <td>姓名</td>
+                        <td>性别</td>
+                        <td>学科</td>
+                        <td>电话</td>
+                        <td>备注</td>
+                        <td>负责人</td>
+                        <td>修改时间</td>
+
+                    </tr>
+                    {% for multiWorker in multiWorkers %}
+                        <tr>
+                            <td>{{ multiWorker.id }}</td>
+                            <td>{{ multiWorker.realName }}</td>
+                            <td>{% if multiWorker.sex == 1 %}男{% elif multiWorker.sex == 0 %}女{% endif %}</td>
+                            <td>{{ multiWorker.subject }}</td>
+                            <td>{{ multiWorker.tel }}</td>
+                            <td>{{ multiWorker.others }}</td>
+                            <td>{{ multiWorker.manager.name }}</td>
+                            <td>{{ multiWorker.modifyTime.date }}</td>
+
+                        </tr>
+                    {% endfor %}
+
+                </table>
+                <br>
+            {% endif %}
+            <table id="inputs1">
+                <tr>
+                    <td>姓名</td>
+                    <td><input type="text" name="realName" value="{{ worker.realName }}"></td>
+                    <td>性别</td>
+                    <td><input type="radio" name="sex" {% if worker.sex == None or worker.sex == '1' or worker.sex == 1 %}
+                        checked
+                    {% endif %} value="1">男&nbsp;&nbsp;
+                        <input type="radio" name="sex" {% if worker.sex == '0' or worker.sex == 0 %}
+                        checked
+                    {% endif %}value="0">女</td>
+                    <td>学科</td>
+                    <td><input type="text" name="subject" value="{{ worker.subject }}"></td>
+
+                </tr>
+                <tr>
+                    <td>别称</td>
+                    <td><input type="text" name="name" value="{{ worker.name }}"></td>
+
+                    <td>电话</td>
+                    <td><input type="text" name="tel" value="{{ worker.tel }}"></td>
+                    <td>备注</td>
+                    <td><input type="text" name="others" value="{{ worker.others }}" placeholder="其他信息"></td>
+                </tr>
+                <tr>
+                    <td colspan="6">
+                        {% block submit %}
+                            <input type="submit" value="查询">
+                        {% endblock %}
+                    </td>
+                </tr>
+            </table>
+
+        </form>
+    </center>
+
+    <script>
+        $(function () {
+            $('#inputs1 input[name="realName"]').change(function () {
+                var realName = $('#inputs1 input[name="realName"]').val().trim();
+                $('#inputs1 input[name="name"]').val(realName);
+            })
+            $('#form1').submit(function () {
+                var confirm = window.confirm("确认提交？");
+                if (!confirm){
+                    return false
+                }
+                var realName = $('#inputs1 input[name="realName"]').val().trim();
+                var name = $('#inputs1 input[name="name"]').val().trim();
+                var tel = parseInt($('#inputs1 input[name="tel"]').val().trim());
+                var subject = $('#inputs1 input[name="subject"]').val().trim();
+
+                {#验证名字#}
+                if(realName.length == 0 | name.length == 0) {
+                    $('#error').text("姓名和别名不能为空")
+                    return false
+                }else if(subject.length == 0){
+                    $('#error').text("学科不能为空")
+                    return false
+                }else if (isNaN(tel)){
+                    $('#error').text("请输入正确电话格式。多个电话号码，请写备注。")
+                    return false
+                }else {
+                    return true
+                }
+            })
+        })
+    </script>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends 'baseHeader.html' %}
+
+{% block title %}
+    公告修改
+{% endblock %}
+
+{% block main %}
+    <form id="form1" action="" method="post">
+        {% csrf_token %}
+        <table>
+            {% for notice in notices %}
+                <tr>
+                    <td>
+                        公告{{ forloop.counter }}
+                        <textarea name="notice{{ forloop.counter }}"
+                        cols="80" rows="5">{{ notice }}</textarea>
+                    </td>
+                </tr>
+            {% endfor %}
+            {% if notices|length < 10 %}
+                <tr>
+                    <td>
+                        公告{{ notices|length|add:1}}
+                        <textarea name="notice{{ notices|length|add:1 }}"
+                            cols="80" rows="5"></textarea>
+                    </td>
+                </tr>
+            {% endif %}
+            <tr id="noticeSubmit">
+                <td>
+                    {% block submit %}
+                        <input type="button" value="增加">
+                        <input type="submit" value="提交">
+                    {% endblock %}
+                </td>
+            </tr>
+        </table>
+    </form>
+    <script>
+        $(function () {
+            $('#noticeSubmit>td>input:first-child').click(function () {
+                var amount = $('#form1>table>tbody>tr').length;
+                if(amount < 11){
+                    var info = '<tr><td>公告' + amount
+                    info += '<textarea name="notice' + amount +'"'
+                    info += 'value="" cols="80" rows="5"></textarea></td></tr>'
+                    $('#noticeSubmit').before(info)
+                }
+            })
+        })
+    </script>
+{% endblock %}

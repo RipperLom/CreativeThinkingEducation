@@ -1,0 +1,337 @@
+{% extends 'baseHeader.html' %}
+
+{% block title %}
+    展示客户
+{% endblock %}
+
+{% block main %}
+    <center>
+        <font id='error' color="red">{{ error|safe|default:"谨慎提交，提交后不可删除" }}</font><br>
+        {% block addedPart %}{% endblock %}
+        {% if multiClients|length != 0 %}
+            <table id="table1">
+                <tr>
+                    <td>id</td>
+                    <td>姓名</td>
+                    <td>性别</td>
+                    <td>年龄</td>
+                    <td>幼儿</td>
+                    <td>小学</td>
+                    <td>初中</td>
+                    <td>高中</td>
+                    <td>电话</td>
+                    <td>操作</td>
+                </tr>
+                {% for multiClient in multiClients %}
+                    <tr class="client{{ multiClient.id }}">
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ multiClient.realName }}</td>
+                        <td>{% if multiClient.sex == 1 %}男{% elif multiClient.sex == 0 %}女{% endif %}</td>
+                        <td>{% widthratio multiClient.createTime.year -1 1 as createYear %}
+                            {% with multiClient.age|add:createYear as middle %}
+                                {{ middle|add:multiClient.createTime.today.year }}
+                            {% endwith %}
+                        </td>
+                        <td>{{ multiClient.kindergarten }}</td>
+                        <td>{{ multiClient.primarySchool }}</td>
+                        <td>{{ multiClient.junior }}</td>
+                        <td>{{ multiClient.senior }}</td>
+                        <td>{{ multiClient.tel }}</td>
+                        <td rowspan="2">
+                            {% if multiClient.status == 1 %}
+{#                                    未通过#}
+                                <button name="modify">&nbsp;修改&nbsp;</button><br>
+                                <button name="delete">&nbsp;删除&nbsp;</button><br>
+                                <button name="submit">&nbsp;提交&nbsp;</button>
+                            {% elif multiClient.status == 2 %}
+{#                                    修改中#}
+                                <button name="modify">&nbsp;修改&nbsp;</button><br>
+                                <button name="submit">&nbsp;提交&nbsp;</button>
+                            {% elif multiClient.status == 3 %}
+{#                                    提交未审核#}
+                                {% if superManager < 1 %}
+                                    <button name="pass">&nbsp;通过&nbsp;</button><br>
+                                    <button name="unPass">&nbsp;未过&nbsp;</button>
+                                {% endif %}
+                            {% elif multiClient.status == 4 %}
+{#                                    申请修改中#}
+                                {% if superManager < 1 %}
+                                    <button name="pass">&nbsp;通过&nbsp;</button><br>
+                                    <button name="unPass">&nbsp;未过&nbsp;</button>
+                                {% endif %}
+
+                            {% elif multiClient.status == 5 %}
+{#                                    审核通过#}
+                                <button name="apply">&nbsp;申改&nbsp;</button>
+                            {% endif %}
+                        </td>
+
+                    </tr>
+                    <tr class="client{{ multiClient.id }}">
+                        <td colspan="3">住址：{{ multiClient.address }}</td>
+                        <td colspan="2">备注：{{ multiClient.others }}</td>
+                        <td colspan="2">负责人：{{ multiClient.manager.name }}</td>
+                        <td colspan="2">状态：<font color="red">
+                            {% if multiClient.status == 1 %}
+                                未提交
+                            {% elif multiClient.status == 2 %}
+                                修改中
+                            {% elif multiClient.status == 3 %}
+                                提交未审核
+                            {% elif multiClient.status == 4 %}
+                                申请修改中
+                            {% elif multiClient.status == 5 %}
+                                <font color="black">审核通过</font>
+                            {% endif %}
+                        </font></td>
+
+                    </tr>
+                {% endfor %}
+
+            </table>
+            <br>
+
+        {% endif %}
+    </center>
+
+    <script>
+        $(function () {
+            {#遍历客户#}
+            {% for multiClient in multiClients %}
+                {% if multiClient.status == 1 %}
+{#                                    未通过#}
+{#                    <button name="modify">&nbsp;修改&nbsp;</button><br>#}
+                    $('#table1>tbody>tr.client'+'{{ multiClient.id }}'+'>td:last-child>button[name="modify"]').click(function () {
+                        var prompt = window.confirm("确认修改？");
+                        if(prompt){
+                            window.location.href = '/manage/modifyClient/?id='+'{{ multiClient.id }}'
+                        }
+                    })
+{#                    <button name="delete">&nbsp;删除&nbsp;</button><br>#}
+                    $('#table1>tbody>tr.client'+'{{ multiClient.id }}'+'>td:last-child>button[name="delete"]').click(function () {
+                        var prompt = window.confirm("确认删除？");
+                        if(prompt){
+                            $.ajax({
+                                type: "POST",
+                                url: '/manage/deleteClient/',
+                                dataType: 'json',
+                                data: {
+                                    'id': '{{ multiClient.id }}',
+                                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                                },
+                                success: function (msg) {
+                                    var result = msg['result'];
+                                    if(result){
+                                        alert('删除成功')
+                                        $('#table1>tbody>tr.client'+'{{ multiClient.id }}').remove()
+
+                                    }else {
+                                        alert('删除失败')
+                                    }
+                                }
+                            })
+                        }
+                    })
+{#                    <button name="submit">&nbsp;提交&nbsp;</button>#}
+                    $('#table1>tbody>tr.client'+'{{ multiClient.id }}'+'>td:last-child>button[name="submit"]').click(function () {
+                        var prompt = window.confirm("确认提交？");
+                        if(prompt){
+                            $.ajax({
+                                type: 'POST',
+                                url: '/manage/submitClient/',
+                                dataType: 'json',
+                                data: {
+                                    'id': '{{ multiClient.id }}',
+                                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                                },
+                                success: function (msg) {
+                                    var result = msg['result'];
+                                    if(result){
+                                        alert('提交成功')
+                                        window.location.reload()
+
+                                    }else {
+                                        alert('提交失败')
+                                    }
+                                    {#$('#table1>tbody>tr.client'+'{{ multiClient.id }}'+'>td:nth-child(4)>font').text('提交未审核')#}
+                                }
+                            })
+                        }
+                    })
+                {% elif multiClient.status == 2 %}
+{#                                    修改中#}
+{#                    <button name="modify">&nbsp;修改&nbsp;</button><br>#}
+                    $('#table1>tbody>tr.client'+'{{ multiClient.id }}'+'>td:last-child>button[name="modify"]').click(function () {
+                        var prompt = window.confirm("确认修改？");
+                        if(prompt){
+                            window.location.href = '/manage/modifyClient/?id='+'{{ multiClient.id }}'
+                        }
+                    })
+{#                    <button name="submit">&nbsp;提交&nbsp;</button>#}
+                    $('#table1>tbody>tr.client'+'{{ multiClient.id }}'+'>td:last-child>button[name="submit"]').click(function () {
+                        var prompt = window.confirm("确认提交？");
+                        if(prompt){
+                            $.ajax({
+                                type: 'POST',
+                                url: '/manage/submitClient/',
+                                dataType: 'json',
+                                data: {
+                                    'id': '{{ multiClient.id }}',
+                                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                                },
+                                success: function (msg) {
+                                    var result = msg['result'];
+                                    if(result){
+                                        alert('提交成功')
+                                        window.location.reload()
+
+                                    }else {
+                                        alert('提交失败')
+                                    }
+                                    {#$('#table1>tbody>tr.client'+'{{ multiClient.id }}'+'>td:nth-child(4)>font').text('提交未审核')#}
+                                }
+                            })
+                        }
+                    })
+                {% elif multiClient.status == 3 %}
+{#                                    提交未审核#}
+                    {% if superManager < 1 %}
+                        {#<button name="pass">&nbsp;通过&nbsp;</button><br>#}
+                        $('#table1>tbody>tr.client'+'{{ multiClient.id }}'+'>td:last-child>button[name="pass"]').click(function () {
+                            var prompt = window.confirm("确认审核通过？");
+                            if(prompt){
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '/manage/passClient/',
+                                    dataType: 'json',
+                                    data: {
+                                        'id': '{{ multiClient.id }}',
+                                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                                    },
+                                    success: function (msg) {
+                                        var result = msg['result'];
+                                        if(result){
+                                            alert('审批成功')
+                                            window.location.reload()
+                                        }else {
+                                            alert('审批失败')
+                                        }
+                                    }
+
+                                })
+                            }
+                        })
+                        {#<button name="unPass">&nbsp;未过&nbsp;</button>#}
+                        $('#table1>tbody>tr.client'+'{{ multiClient.id }}'+'>td:last-child>button[name="unPass"]').click(function () {
+                            var prompt = window.confirm("确认不通过，打回重做？");
+                            if(prompt){
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '/manage/unPassClient/',
+                                    dataType: 'json',
+                                    data: {
+                                        'id': '{{ multiClient.id }}',
+                                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                                    },
+                                    success: function (msg) {
+                                        var result = msg['result'];
+                                        if(result){
+                                            alert('审批成功')
+                                            window.location.reload()
+                                        }else {
+                                            alert('审批失败')
+                                        }
+                                    }
+
+                                })
+                            }
+                        })
+                    {% endif %}
+                {% elif multiClient.status == 4 %}
+{#                                    申请修改中#}
+                    {% if superManager < 1 %}
+                        {#<button name="pass">&nbsp;通过&nbsp;</button><br>#}
+                        $('#table1>tbody>tr.client'+'{{ multiClient.id }}'+'>td:last-child>button[name="pass"]').click(function () {
+                            var prompt = window.confirm("确认审核通过？");
+                            if(prompt){
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '/manage/passClient/',
+                                    dataType: 'json',
+                                    data: {
+                                        'id': '{{ multiClient.id }}',
+                                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                                    },
+                                    success: function (msg) {
+                                        var result = msg['result'];
+                                        if(result){
+                                            alert('审批成功')
+                                            window.location.reload()
+                                        }else {
+                                            alert('审批失败')
+                                        }
+                                    }
+
+                                })
+                            }
+                        })
+                        {#<button name="unPass">&nbsp;未过&nbsp;</button>#}
+                        $('#table1>tbody>tr.client'+'{{ multiClient.id }}'+'>td:last-child>button[name="unPass"]').click(function () {
+                            var prompt = window.confirm("确认不通过，打回重做？");
+                            if(prompt){
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '/manage/unPassClient/',
+                                    dataType: 'json',
+                                    data: {
+                                        'id': '{{ multiClient.id }}',
+                                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                                    },
+                                    success: function (msg) {
+                                        var result = msg['result'];
+                                        if(result){
+                                            alert('审批成功')
+                                            window.location.reload()
+                                        }else {
+                                            alert('审批失败')
+                                        }
+                                    }
+
+                                })
+                            }
+                        })
+                    {% endif %}
+
+                {% elif multiClient.status == 5 %}
+{#                                    审核通过#}
+{#                    <button name="apply">&nbsp;申改&nbsp;</button>#}
+                    $('#table1>tbody>tr.client'+'{{ multiClient.id }}'+'>td:last-child>button[name="apply"]').click(function () {
+                        var prompt = window.confirm("已审核通过，确认有信息要修改？");
+                        if(prompt){
+                            $.ajax({
+                                type: 'POST',
+                                url: '/manage/applyClient/',
+                                dataType: 'json',
+                                data: {
+                                    'id': '{{ multiClient.id }}',
+                                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                                },
+                                success: function (msg) {
+                                    var result = msg['result'];
+                                    if(result){
+                                        alert('申请修改成功')
+                                        window.location.reload()
+                                    }else {
+                                        alert('申请修改失败')
+                                    }
+                                }
+
+                            })
+                        }
+                    })
+                {% endif %}
+            {% endfor %}
+            
+        })
+    </script>
+{% endblock %}

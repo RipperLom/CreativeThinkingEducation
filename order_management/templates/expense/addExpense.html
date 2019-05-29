@@ -1,0 +1,232 @@
+{% extends 'baseHeader.html' %}
+
+{% block title %}
+    添加支出
+{% endblock %}
+
+{% block main %}
+    <center>
+        <form id="form1" action="" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <font id='error' color="red">{{ error|safe }}</font><br>
+            {% if multiExpenses|length != 0 %}
+                <table>
+                    <tr>
+                        <td>id</td>
+                        <td>姓名</td>
+                        <td>性别</td>
+                        <td>年龄</td>
+                        <td>幼儿</td>
+                        <td>小学</td>
+                        <td>初中</td>
+                        <td>高中</td>
+                        <td>电话</td>
+                    </tr>
+                    {% for multiExpense in multiExpenses %}
+                        <tr>
+                            <td>{{ multiExpense.id }}</td>
+                            <td>{{ multiExpense.realName }}</td>
+                            <td>{% if multiExpense.sex == 1 %}男{% elif multiExpense.sex == 0 %}女{% endif %}</td>
+                            <td>{% widthratio multiExpense.createTime.year -1 1 as createYear %}
+                                {% with multiExpense.age|add:createYear as middle %}
+                                    {{ middle|add:multiExpense.createTime.today.year }}
+                                {% endwith %}
+                            </td>
+                            <td>{{ multiExpense.kindergarten }}</td>
+                            <td>{{ multiExpense.primarySchool }}</td>
+                            <td>{{ multiExpense.junior }}</td>
+                            <td>{{ multiExpense.senior }}</td>
+                            <td>{{ multiExpense.tel }}</td>
+
+                        </tr>
+                        <tr>
+                            <td colspan="3">住址：{{ multiExpense.address }}</td>
+                            <td colspan="2">备注：{{ multiExpense.others }}</td>
+                            <td colspan="2">负责人：{{ multiExpense.manager.name }}</td>
+                            <td colspan="2">修改：{{ multiExpense.modifyTime.date }}</td>
+
+                        </tr>
+                    {% endfor %}
+
+                </table>
+                <br>
+
+            {% endif %}
+            <table id="inputs1">
+                <tr>
+                    <td rowspan="2">收款人<br>选择</td>
+                    <td>姓名</td>
+                    <td>性别</td>
+                    <td>学科</td>
+                    <td colspan="2">电话</td>
+
+                </tr>
+                <tr class="worker">
+                    <td><input type="text" name="workerRealName" value="{{ worker.realName }}"></td>
+                    <td><input type="radio" name="workerSex" {% if worker.sex == None or worker.sex == '1' or worker.sex == 1 %}
+                        checked
+                    {% endif %} value="1">男<br><input type="radio" name="workerSex" {% if worker.sex == '0' or worker.sex == 0 %}
+                        checked
+                    {% endif %}value="0">女</td>
+                    <td><input type="text" name="workerSubject" value="{{ worker.subject }}"></td>
+                    <td colspan="2"><input type="text" name="workerTel" value="{{ worker.tel }}"></td>
+
+                </tr>
+                <tr>
+                    <td colspan="6"></td>
+                </tr>
+                <tr>
+
+                    <td>简介</td>
+                    <td><input type="text" name="name" value="{{ expense.name }}"></td>
+                    <td>日期</td>
+                    <td><input type="date" name="date" value="{% if expense.date|length == 10 %}{{ expense.date }}{% else %}{{ expense.date|date:"Y-m-d" }}{% endif %}"></td>
+                    <td>金额</td>
+                    <td><input type="text" name="money" value="{{ expense.money|floatformat:"2" }}"></td>
+                </tr>
+                <tr>
+                    <td>备注</td>
+                    <td><input type="text" name="others" value="{{ expense.others }}" placeholder="其他说明"></td>
+{#                    <td colspan="4"><a href="javascript:;" class="a-upload"><input type="file" name="voucherPicture">点击这里上传凭证</a></td>#}
+                    <td colspan="4"><input type="file" name="voucherPicture"></td>
+
+                </tr>
+
+                <tr>
+                    <td colspan="6">
+                        {% block submit %}
+                            <input type="submit" value="提交">
+                        {% endblock %}
+                    </td>
+                </tr>
+            </table>
+
+        </form>
+    </center>
+
+
+
+
+    <script>
+        $(function () {
+            $(".a-upload").on("change","input[type='file']",function(){
+                var filePath=$(this).val();
+                var names = filePath.split('\\');
+                var name = names[names.length - 1]
+                $('#inputs1>tbody>tr>td>a.a-upload').text(name)
+
+            })
+            function updateWorkers(){
+                var realName = $('#inputs1 input[name="workerRealName"]').val().trim();
+                var sex = $('#inputs1 input[name="workerSex"]:checked').val().trim();
+                var tel = $('#inputs1 input[name="workerTel"]').val().trim();
+                var subject = $('#inputs1 input[name="workerSubject"]').val().trim();
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/manage/getWorkers/',
+                    dataType: 'json',
+                    data:{
+                        'csrfmiddlewaretoken': '{{ csrf_token }}',
+                        'realName': realName,
+                        'sex': sex,
+                        "tel": tel,
+                        'subject': subject
+                    },
+                    success: function (msg) {
+                        {#还原#}
+                        $('#inputs1>tbody>tr.workerRadio').remove()
+                        {#查找结果#}
+                        var result = msg['result'];
+                            if(result){
+                                var multiWorkers = msg['multiWorkers'];
+                                var trStr = '<tr class="workerRadio">' +
+                                '<td colspan="6"><a href="/manage/addWorker/">若查找无结果，请添加新员工。<input type="button" value="增加"></a></td>' +
+                                '</tr>'
+
+                                $('#inputs1>tbody>tr.worker').after(trStr)
+                                if (multiWorkers == ''){
+
+                                }else {
+                                    for (var index in multiWorkers){
+
+                                        var worker = multiWorkers[index]
+                                        var id = worker[0]
+                                        var name = worker[1]
+                                        var sex = worker[2] == '1' ? '男':'女'
+                                        var subject = worker[3]
+                                        var tel = worker[4]
+                                        var trStr = '<tr class="workerRadio">' +
+                                            '<td><input type="radio" name="workerId" value="' + id + '"></td>' +
+                                            '<td>'+name+'</td>' +
+                                            '<td>'+sex+'</td>' +
+                                            '<td>'+subject+'</td>' +
+                                            '<td colspan="2">'+tel+'</td>' +
+                                            '</tr>'
+
+                                        $('#inputs1>tbody>tr.worker').after(trStr)
+                                    }
+                                }
+                            }else {
+                                alert("没找到")
+                            }
+
+                    }
+                })
+            }
+            var timeout;
+            $('#inputs1 input[name="workerRealName"], #inputs1 input[name="workerSex"], ' +
+                '#inputs1 input[name="workerSubject"], #inputs1 input[name="workerTel"]').keyup(function () {
+                clearTimeout(timeout);
+                timeout = setTimeout(updateWorkers, 500);
+
+            });
+            $('#inputs1 input[name="workerRealName"], #inputs1 input[name="workerSex"], ' +
+                '#inputs1 input[name="workerSubject"], #inputs1 input[name="workerTel"]').change(function () {
+                clearTimeout(timeout);
+                timeout = setTimeout(updateWorkers, 500);
+            });
+            $('#inputs1 input[name="workerRealName"], #inputs1 input[name="workerSex"], ' +
+                '#inputs1 input[name="workerSubject"], #inputs1 input[name="workerTel"]').click(function () {
+                clearTimeout(timeout);
+                timeout = setTimeout(updateWorkers, 500);
+            });
+            $('#form1').submit(function () {
+                var confirm = window.confirm("确认提交？");
+                if (!confirm){
+                    return false
+                }
+                var name = $('#inputs1 input[name="name"]').val().trim();
+                var date = $('#inputs1 input[name="date"]').val().trim();
+                var money = parseFloat($('#inputs1 input[name="money"]').val().trim());
+                var voucherPicture = $('#inputs1 input[name="voucherPicture"]').val().trim();
+
+                {#验证名字#}
+                if(name.length == 0){
+                    $('#error').text("简介不能为空")
+                    return false
+                }else if (date.length <= 0){
+                    $('#error').text("请选择日期")
+                    return false
+                }else if(isNaN(money)){
+                    $('#error').text("请输入正确金额格式")
+                    return false
+                }else if (money < 0){
+                    $('#error').text("请输入正确金额范围")
+                    return false
+
+                }else if(voucherPicture.length <= 0){
+                    goOnSubmit = window.confirm('还没有上传凭证。确认继续提交？')
+                    if(goOnSubmit){
+                        return true
+                    }else {
+                        return false
+                    }
+
+                }else {
+                    return true
+                }
+            })
+        })
+    </script>
+{% endblock %}

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}
+        登录
+    {% endblock %}</title>
+    <script src="/static/js/jquary.js"></script>
+    <link rel="stylesheet" href="/static/css/base.css">
+    <style>
+        #form1{
+            width: 200px;
+            height: 200px;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        $(function () {
+            $('#form1').submit(function () {
+                var name = $('#form1>input:text[name="name"]').val().trim();
+                var password = $('#form1>input:password[name="password"]').val().trim();
+                if (name.length == 0){
+                    $('#error').text('名字为空')
+                    return false
+                }else if (password.length < 8){
+                    $('#error').text('密码少于8位')
+                    return false
+                }else {
+                    return true
+                }
+            })
+            $('#form1>input:button').click(function () {
+                window.location.href = '/manage/regist/'
+            })
+        })
+    </script>
+    <header>
+        <p><a href=""><font>
+            {% block info %}
+                欢迎您登录
+            {% endblock %}
+        </font></a></p>
+    </header>
+    <div id="main1">
+        <form id="form1" action="" method="post">
+            {% csrf_token %}
+            <font id='error' color="red">{{ error | safe }}</font><br><br>
+            姓名：{% block inputName %}<input type="text" name="name">{% endblock %}<br><br>
+            密码：<input type="password" name="password"><br><br>
+            {% block submit %}
+                机密：<input type="password" name="secret"><br><br>
+                <input type="submit" value="登录">
+                <input type="button" value="注册">
+            {% endblock %}
+        </form>
+    </div>
+</body>
+</html>

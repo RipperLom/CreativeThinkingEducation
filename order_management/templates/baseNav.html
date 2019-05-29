@@ -1,0 +1,54 @@
+﻿{% extends 'base.html' %}
+{% block title %}
+    管理员管理页面
+{% endblock %}
+{% block nav %}
+    <table>
+        <tr>
+            <td colspan="2"><a href="/manage/showOrders/">订单管理</a></td>
+        </tr>
+        <tr>
+            <td>1</td>
+            <td><a href="/manage/addOrder/">增加订单</a></td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td><a href="/manage/searchOrders/">订单查询</a></td>
+        </tr>
+        <tr>
+            <td colspan="2"><a href="/manage/showExpenses/">支出管理</a></td>
+        </tr>
+        <tr>
+            <td>1</td>
+            <td><a href="/manage/addExpense/">增加支出</a></td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td><a href="/manage/searchExpenses/">支出查询</a></td>
+        </tr>
+        <tr>
+            <td colspan="2"><a href="/manage/showClients/">学生管理</a></td>
+        </tr>
+        <tr>
+            <td>1</td>
+            <td><a href="/manage/addClient/">增加学生</a></td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td><a href="/manage/searchClients/">学生查询</a></td>
+        </tr>
+        <tr>
+            <td colspan="2"><a href="/manage/showWorkers/">员工管理</a></td>
+        </tr>
+        <tr>
+            <td>1</td>
+            <td><a href="/manage/addWorker/">增加员工</a></td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td><a href="/manage/searchWorkers/">员工查询</a></td>
+        </tr>
+
+    </table>
+
+{% endblock %}
